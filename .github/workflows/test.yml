@@ -1,0 +1,28 @@
+name: Test dev container
+
+on:
+  schedule:
+    - cron: "56 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  dev-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Test dev container
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
+        with:
+          runCmd: opensafely exec ehrql:v1 debug quiz.py
+
+      - name: Notify Slack on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: zuplo/github-action-slack-notify-build@cf8e7e66a21d76a8125ea9648979c30920195552 # v2
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BENNETTBOT_SLACK_BOT_TOKEN }}
+        with:
+          channel_id: C0A8WAJMK0S
+          status: "Scheduled dev container test run failure"
+          color: danger
